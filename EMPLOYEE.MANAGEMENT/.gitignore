@@ -1,0 +1,36 @@
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Others
+*.swp
+*.bak
+*.tmp
+*.log
+*.DS_Store
+
+# Dotnet specific
+*.dll
+*.pdb
+*.cache
+*.exe
+*.appx
+*.dbmdl
+*.jfm
+*.snk
+*.psess
+*.vsp
+*.vspscc
+*.vssscc
+
