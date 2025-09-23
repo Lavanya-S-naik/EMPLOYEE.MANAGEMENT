@@ -21,12 +21,20 @@ builder.Services.AddSingleton<IEmployeeStoreDB>(sp =>
 builder.Services.AddSingleton<IMongoClient>(s =>
     new MongoClient(builder.Configuration.GetValue<string>("EmployeeStoreDB:ConnectionString")));
 
-// Register your employee service
+// Register your employee service and repository with logging
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeRepository>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    var settings = sp.GetRequiredService<IEmployeeStoreDB>();
+    var logger = sp.GetRequiredService<ILogger<EmployeeRepository>>();
+    return new EmployeeRepository(client, settings, logger);
+});
 
 // Add controllers and Swagger for API testing
 builder.Services.AddControllers();
+builder.Services.AddLogging();
+builder.Logging.AddProvider(new SimpleFileLoggerProvider("Logs/log.txt"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
