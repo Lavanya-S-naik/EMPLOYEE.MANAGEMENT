@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using System.Linq.Expressions;
+using Microsoft.Extensions.Logging;
 
 
 public class EmployeeRepositoryTests
@@ -16,6 +17,7 @@ public class EmployeeRepositoryTests
         var clientMock = new Mock<IMongoClient>();
         var dbMock = new Mock<IMongoDatabase>();
         var settingsMock = new Mock<IEmployeeStoreDB>();
+        var loggerMock = new Mock<ILogger<EmployeeRepository>>();
 
         dbMock.Setup(db => db.GetCollection<Employee>(It.IsAny<string>(), null))
             .Returns(collectionMock);
@@ -26,7 +28,7 @@ public class EmployeeRepositoryTests
         settingsMock.Setup(s => s.DatabaseName).Returns("TestDB");
         settingsMock.Setup(s => s.EmployeesCollectionName).Returns("Employees");
 
-        return new EmployeeRepository(clientMock.Object, settingsMock.Object);
+        return new EmployeeRepository(clientMock.Object, settingsMock.Object, loggerMock.Object);
     }
 
     [Fact]
@@ -36,13 +38,14 @@ public class EmployeeRepositoryTests
         var clientMock = new Mock<IMongoClient>();
         var dbMock = new Mock<IMongoDatabase>();
         var settingsMock = new Mock<IEmployeeStoreDB>();
+        var loggerMock = new Mock<ILogger<EmployeeRepository>>();
 
         dbMock.Setup(db => db.GetCollection<Employee>(It.IsAny<string>(), null)).Returns(collectionMock.Object);
         clientMock.Setup(c => c.GetDatabase(It.IsAny<string>(), null)).Returns(dbMock.Object);
         settingsMock.SetupGet(s => s.DatabaseName).Returns("TestDB");
         settingsMock.SetupGet(s => s.EmployeesCollectionName).Returns("Employees");
 
-        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object);
+        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object, loggerMock.Object);
 
         await repo.AddAsync(new Employee { Id = "1", Name = "Test" });
         collectionMock.Verify(c => c.InsertOneAsync(It.IsAny<Employee>(), null, default), Times.Once());
@@ -55,13 +58,14 @@ public class EmployeeRepositoryTests
         var clientMock = new Mock<IMongoClient>();
         var dbMock = new Mock<IMongoDatabase>();
         var settingsMock = new Mock<IEmployeeStoreDB>();
+        var loggerMock = new Mock<ILogger<EmployeeRepository>>();
 
         dbMock.Setup(db => db.GetCollection<Employee>(It.IsAny<string>(), null)).Returns(collectionMock.Object);
         clientMock.Setup(c => c.GetDatabase(It.IsAny<string>(), null)).Returns(dbMock.Object);
         settingsMock.SetupGet(s => s.DatabaseName).Returns("TestDB");
         settingsMock.SetupGet(s => s.EmployeesCollectionName).Returns("Employees");
 
-        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object);
+        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object, loggerMock.Object);
 
         await repo.UpdateAsync("2", new Employee { Id = "2", Name = "Updated" });
 
@@ -83,13 +87,14 @@ public class EmployeeRepositoryTests
         var clientMock = new Mock<IMongoClient>();
         var dbMock = new Mock<IMongoDatabase>();
         var settingsMock = new Mock<IEmployeeStoreDB>();
+        var loggerMock = new Mock<ILogger<EmployeeRepository>>();
 
         dbMock.Setup(db => db.GetCollection<Employee>(It.IsAny<string>(), null)).Returns(collectionMock.Object);
         clientMock.Setup(c => c.GetDatabase(It.IsAny<string>(), null)).Returns(dbMock.Object);
         settingsMock.SetupGet(s => s.DatabaseName).Returns("TestDB");
         settingsMock.SetupGet(s => s.EmployeesCollectionName).Returns("Employees");
 
-        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object);
+        var repo = new EmployeeRepository(clientMock.Object, settingsMock.Object, loggerMock.Object);
 
         await repo.DeleteAsync("3");
 
