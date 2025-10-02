@@ -35,12 +35,69 @@ namespace EMPLOYEE.MANAGEMENT.REPOSITORY.Repository
             return true;
         }
 
-        public async Task<bool> UpdateUserRoleAsync(string username, string newRole)
+        public async Task<bool> AddRoleToUserAsync(string username, string newRole)
         {
-            var update = Builders<UserData>.Update.Set(u => u.Role, newRole);
-            var result = await users.UpdateOneAsync(u => u.Username == username, update);
+            var user = await users.Find(u => u.Username == username).FirstOrDefaultAsync();
+            if (user == null) return false;
+
+            // Initialize roles list if it's empty (for old users)
+            if (user.Roles == null || !user.Roles.Any())
+            {
+                user.Roles = new List<string>();
+                // If user has old single role, add it to the list
+                if (!string.IsNullOrEmpty(user.Role))
+                {
+                    user.Roles.Add(user.Role);
+                }
+            }
+
+            if (!user.Roles.Contains(newRole))
+            {
+                user.Roles.Add(newRole);
+                var update = Builders<UserData>.Update.Set(u => u.Roles, user.Roles);
+                var result = await users.UpdateOneAsync(u => u.Username == username, update);
+                return result.MatchedCount > 0 && result.ModifiedCount > 0;
+            }
+            return true; // Role already exists
+        }
+
+        public async Task<bool> RemoveRoleFromUserAsync(string username, string roleToRemove)
+        {
+            var user = await users.Find(u => u.Username == username).FirstOrDefaultAsync();
+            if (user == null) return false;
+
+            if (user.Roles.Contains(roleToRemove))
+            {
+                user.Roles.Remove(roleToRemove);
+                if (user.Roles.Count == 0)
+                {
+                    return false; // Cannot remove all roles
+                }
+                var update = Builders<UserData>.Update.Set(u => u.Roles, user.Roles);
+                var result = await users.UpdateOneAsync(u => u.Username == username, update);
+                return result.MatchedCount > 0 && result.ModifiedCount > 0;
+            }
+            return true; // Role doesn't exist
+        }
+
+
+
+
+        public async Task<bool> UpdateUserAsync(UserData user)
+        {
+            var update = Builders<UserData>.Update
+                .Set(u => u.Password, user.Password)
+                .Set(u => u.Roles, user.Roles);
+            // Add other fields as needed
+
+            var result = await users.UpdateOneAsync(
+                u => u.Username == user.Username,
+                update
+            );
+
             return result.MatchedCount > 0 && result.ModifiedCount > 0;
         }
+
 
     }
 }

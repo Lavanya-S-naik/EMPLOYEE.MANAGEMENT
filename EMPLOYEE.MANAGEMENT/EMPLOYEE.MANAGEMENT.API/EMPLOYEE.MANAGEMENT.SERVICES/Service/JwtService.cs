@@ -34,14 +34,20 @@ namespace EMPLOYEE.MANAGEMENT.SERVICES.Service
 
 
         // Create claims
-        var claims = new[]
+        var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.NameIdentifier, username),
-                new Claim(ClaimTypes.Role, userRole),
                 new Claim("jti", Guid.NewGuid().ToString()),
                 new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             };
+
+        // Add role claims for each role
+        var roles = userRole.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.Trim()));
+        }
 
             // Create JWT token
             var token = new JwtSecurityToken(

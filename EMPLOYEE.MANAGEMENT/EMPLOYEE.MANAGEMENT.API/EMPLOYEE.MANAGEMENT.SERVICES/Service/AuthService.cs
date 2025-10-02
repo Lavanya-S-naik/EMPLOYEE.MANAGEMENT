@@ -37,14 +37,29 @@ namespace EMPLOYEE.MANAGEMENT.SERVICES.Service
                 return null;
             }
 
-            var token = _jwtService.GenerateToken(user.Username, user.Role);
+            // Handle both old single role and new multiple roles
+            var userRoles = new List<string>();
+            
+            // If user has the new roles format, use it
+            if (user.Roles != null && user.Roles.Any())
+            {
+                userRoles = user.Roles;
+            }
+            // If user has the old single role format, convert it
+            else if (!string.IsNullOrEmpty(user.Role))
+            {
+                userRoles = new List<string> { user.Role };
+            }
+            
+            var token = _jwtService.GenerateToken(user.Username, string.Join(",", userRoles));
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
-            _logger.LogInformation("Authentication successful for user: {Username}", loginRequest.Username);
+            _logger.LogInformation("Authentication successful for user: {Username} with roles: {Roles}", loginRequest.Username, string.Join(",", userRoles));
             return new LoginResponse
             {
                 Token = token,
                 ExpiresAt = expiresAt,
-                Username = user.Username
+                Username = user.Username,
+                Roles = userRoles
             };
         }
     }

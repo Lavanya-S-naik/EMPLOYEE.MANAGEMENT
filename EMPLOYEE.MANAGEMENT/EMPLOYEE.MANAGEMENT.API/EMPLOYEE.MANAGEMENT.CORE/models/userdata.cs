@@ -18,8 +18,13 @@ namespace EMPLOYEE.MANAGEMENT.CORE.models
         public string Username { get; set; }
         [BsonElement("password")]
         public string Password { get; set; }
+        
+        // Support both old 'role' field and new 'roles' field
         [BsonElement("role")]
-        public string Role { get; set; }
+        public string? Role { get; set; }
+        
+        [BsonElement("roles")]
+        public List<string> Roles { get; set; } = new List<string>();
     }
 }
 

@@ -50,12 +50,6 @@ builder.Services.AddScoped<IEmployeeRepository>(sp =>
 // Register authentication services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ApprovalCodeRepository>(sp =>
-{
-    var client = sp.GetRequiredService<IMongoClient>();
-    var settings = sp.GetRequiredService<IEmployeeStoreDB>();
-    return new ApprovalCodeRepository(client, settings);
-});
 
 
 // Configure JWT Authentication
