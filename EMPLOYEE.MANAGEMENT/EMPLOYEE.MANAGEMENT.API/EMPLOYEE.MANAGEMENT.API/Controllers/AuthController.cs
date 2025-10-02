@@ -16,12 +16,14 @@ namespace Employee_Management.Controllers
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
         private readonly UserRepository _userRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger, UserRepository userRepository)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger, UserRepository userRepository, IEmployeeRepository employeeRepository)
         {
             _authService = authService;
             _logger = logger;
             _userRepository = userRepository;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -29,6 +31,13 @@ namespace Employee_Management.Controllers
         /// </summary>
         /// <param name="request">Registration details</param>
         /// <returns>Success message if registration successful</returns>
+        /// 
+
+
+
+
+
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -40,31 +49,23 @@ namespace Employee_Management.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            // Only allow ReadOnly for public registration
-            var allowedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            // Find employee by email (username)
+            var employee = await _employeeRepository.GetByEmailAsync(request.Username);
+            if (employee == null)
             {
-                "ReadOnly"
-            };
-
-            if (request?.Roles == null || !request.Roles.Any())
-            {
-                _logger.LogWarning("No roles provided for registration");
-                return BadRequest("At least one role is required.");
+                _logger.LogWarning("No employee found for email: {Username}", request.Username);
+                return BadRequest("No matching employee record found for this email.");
             }
 
-            // Validate all provided roles - only ReadOnly allowed for public registration
-            var invalidRoles = request.Roles.Where(role => !allowedRoles.Contains(role)).ToList();
-            if (invalidRoles.Any())
-            {
-                _logger.LogWarning("Invalid roles provided for public registration: {InvalidRoles}", string.Join(", ", invalidRoles));
-                return BadRequest($"Invalid roles: {string.Join(", ", invalidRoles)}. Public registration only allows: ReadOnly. For Moderator/Admin roles, contact an administrator.");
-            }
+            // Map employee position to allowed system role(s)
+            List<string> mappedRoles = GetRolesForPosition(employee.Position); // Helper method below
 
+            // Create user with position-based roles
             var user = new UserData
             {
                 Username = request.Username,
                 Password = request.Password,
-                Roles = request.Roles
+                Roles = mappedRoles
             };
 
             var success = await _userRepository.RegisterUserAsync(user);
@@ -74,9 +75,93 @@ namespace Employee_Management.Controllers
                 return BadRequest("Username already exists");
             }
 
-            _logger.LogInformation("Registration successful for user: {Username} with roles: {Roles}", request.Username, string.Join(",", request.Roles));
-            return Ok("Registration successful");
+            _logger.LogInformation("Registration successful for user: {Username} with roles: {Roles}", request.Username, string.Join(",", mappedRoles));
+            return Ok($"Registration successful. Role(s) assigned: {string.Join(", ", mappedRoles)}");
         }
+
+        // Helper method for role mapping
+        private List<string> GetRolesForPosition(string position)
+        {
+            var pos = position?.ToLower() ?? "";
+            if (pos.Contains("director"))
+                return new List<string> { "Admin" };
+            if (pos.Contains("hr") || pos.Contains("manager"))
+                return new List<string> { "Manager" };
+            if (pos.Contains("developer") || pos.Contains("engineer") || pos.Contains("it analyst"))
+                return new List<string> { "ReadOnly" };
+            // Default
+            return new List<string> { "ReadOnly" };
+        }
+
+
+
+
+
+
+        //[HttpPost("register")]
+        //public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        //{
+        //    _logger.LogInformation("Registration attempt for user: {Username}", request.Username);
+
+        //    if (!ModelState.IsValid)
+        //    {
+        //        _logger.LogWarning("Invalid registration request model");
+        //        return ValidationProblem(ModelState);
+        //    }
+
+        //    // Only allow ReadOnly for public registration
+        //    var allowedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        //    {
+        //        "ReadOnly"
+        //    };
+
+        //    if (request?.Roles == null || !request.Roles.Any())
+        //    {
+        //        _logger.LogWarning("No roles provided for registration");
+        //        return BadRequest("At least one role is required.");
+        //    }
+
+        //    // Validate all provided roles - only ReadOnly allowed for public registration
+        //    var invalidRoles = request.Roles.Where(role => !allowedRoles.Contains(role)).ToList();
+        //    if (invalidRoles.Any())
+        //    {
+        //        _logger.LogWarning("Invalid roles provided for public registration: {InvalidRoles}", string.Join(", ", invalidRoles));
+        //        return BadRequest($"Invalid roles: {string.Join(", ", invalidRoles)}. Public registration only allows: ReadOnly. For Moderator/Admin roles, contact an administrator.");
+        //    }
+
+        //    var user = new UserData
+        //    {
+        //        Username = request.Username,
+        //        Password = request.Password,
+        //        Roles = request.Roles
+        //    };
+
+        //    var success = await _userRepository.RegisterUserAsync(user);
+        //    if (!success)
+        //    {
+        //        _logger.LogWarning("Registration failed - username already exists: {Username}", request.Username);
+        //        return BadRequest("Username already exists");
+        //    }
+
+        //    _logger.LogInformation("Registration successful for user: {Username} with roles: {Roles}", request.Username, string.Join(",", request.Roles));
+        //    return Ok("Registration successful");
+        //}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         /// <summary>
         /// Adds a new role to an existing user.
@@ -238,6 +323,10 @@ namespace Employee_Management.Controllers
             _logger.LogInformation("Login successful for user: {Username}", loginRequest.Username);
             return Ok(result);
         }
+
+
+
+
 
 
 

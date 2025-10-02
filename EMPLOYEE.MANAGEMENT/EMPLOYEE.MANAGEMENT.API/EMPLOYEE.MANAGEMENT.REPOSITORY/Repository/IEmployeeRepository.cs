@@ -12,6 +12,8 @@ namespace EMPLOYEE.MANAGEMENT.REPOSITORY.Repository
     /// </summary>
     public interface IEmployeeRepository
     {
+        
+
         /// <summary>
         /// Retrieves all employees.
         /// </summary>
@@ -36,6 +38,9 @@ namespace EMPLOYEE.MANAGEMENT.REPOSITORY.Repository
         /// Deletes the specified employee.
         /// </summary>
         /// <param name="id">The employee identifier.</param>
+        /// 
+
+        Task<Employee> GetByEmailAsync(string email);
         Task DeleteAsync(string id);
     }
 }

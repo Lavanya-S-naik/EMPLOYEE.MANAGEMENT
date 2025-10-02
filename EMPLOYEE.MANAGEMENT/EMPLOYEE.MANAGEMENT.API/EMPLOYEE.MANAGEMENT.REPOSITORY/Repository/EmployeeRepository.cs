@@ -112,6 +112,13 @@ namespace EMPLOYEE.MANAGEMENT.REPOSITORY.Repository
             await _employees.DeleteOneAsync(e => e.Id == id);
             _logger?.LogInformation("Repository deleted employee {EmployeeId}", id);
         }
+
+        public async Task<Employee> GetByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            return await _employees.Find(e => e.Email == email).FirstOrDefaultAsync();
+        }
+
     }
 }
 
